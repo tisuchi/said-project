@@ -8,25 +8,37 @@
 
   // If upload button is clicked ...
   if (isset($_POST['upload'])) {
-    // Get image name
-    $image = $_FILES['image']['name'];
-    // Get text
+
+    $filename = $_FILES["image"]["name"];
+    $file_basename = substr($filename, 0, strripos($filename, '.')); // get file extention
+    $file_ext = substr($filename, strripos($filename, '.')); // get file name
+    //$filesize = $_FILES["image"]["size"];
+    $allowed_file_types = array('.jpg','.jpeg','.gif','.png');  
+
+    if (in_array($file_ext,$allowed_file_types) )
+    { 
+      // Rename file
+      $newfilename = rand() . $file_ext;
+
+      move_uploaded_file($_FILES["image"]["tmp_name"], "images/" . $newfilename);
+
+      $msg = "You have successfully Uploaded.";
+    }
+
     $title = mysqli_real_escape_string($db, $_POST['title']);
 
     $image_text = mysqli_real_escape_string($db, $_POST['image_text']);
 
-    // image file directory
-    $target = "images/".basename($_FILES['image']['name']);
-
-    $sql = "INSERT INTO photo (image,title, image_text) VALUES ('$image','$title','$image_text')";
+    $sql = "INSERT INTO photo(image,title,image_text) VALUES ('$newfilename', '$title', '$image_text')";
+    
     // execute query
-    mysqli_query($db, $sql);
-
-    if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
-      $msg = "Image uploaded successfully";
-    }else{
-      $msg = "Failed to upload image";
+    if ($db->query($sql) === TRUE) {
+        echo "New record created successfully";
+    } else {
+        echo "Error: " . $sql . "<br>" . $db->error;
     }
+
+    $db->close();
   }
 
 ?>
@@ -84,338 +96,89 @@
 <body>
 
 <div class="container">
-<div class="row">
-<div class="col-md-3">
-  <div class="row">
-  <div class="col-md-12">
 
-<?php
- 
-   
-   $db = mysqli_connect("localhost", "root", "", "ramcel");
-   $sql="SELECT * FROM photo  WHERE id ='1'";
-  $result = mysqli_query($db,$sql);
-  
+<?php 
 
- while ($row = mysqli_fetch_array($result)) {
+$sql="SELECT * FROM photo  ORDER BY id DESC";
+$result = mysqli_query($db,$sql);
 
-
-
-  echo "<img src='images/".$row["image"]."'  >";
-        
-         echo "<div id='title'>";
-        echo  " <a href='detail.php?id={$row['id']}'>{$row['title']} </a>" ;
-        echo "</div>";
-       
+function getImageById($imageId, $con)
+{
+  $sql="SELECT * FROM photo WHERE id = $imageId";
+  $result = mysqli_query($con,$sql);
+  return mysqli_fetch_array($result)['image'];
 }
 
+$rowId = 1;
+$currentImageId = mysqli_num_rows($result);
+$colId = 1;
 
-?>
+while ($row = mysqli_fetch_array($result)) {
 
+  if ($rowId % 2 == 0) {
+    echo '<div class="row">';
+    if ($colId == 1) {
+      echo '<div class="col-sm-6">';
+        echo '<img src="images/'.getImageById($currentImageId, $db).'">';
+        $currentImageId --;
+      echo '</div>';
+      $colId++;
+    }
+    if ($colId == 2) {
+      echo '<div class="col-sm-3">';
+        echo '<img src="images/'.getImageById($currentImageId, $db).'">';
+        $currentImageId --;
+        echo '<img src="images/'.getImageById($currentImageId, $db).'">';
+        $currentImageId --;
+      echo '</div>';
+      $colId++;
+    }
+    if ($colId == 3) {
+      echo '<div class="col-sm-3">';
+        echo '<img src="images/'.getImageById($currentImageId, $db).'">';
+        $currentImageId --;
+        echo '<img src="images/'.getImageById($currentImageId, $db).'">';
+        $currentImageId --;
+      echo '</div>';
+      $colId++;
+    }
+    echo '</div>';
+    $colId = 1;
+  } else {
+    echo '<div class="row">';
+    if ($colId == 1) {
+      echo '<div class="col-sm-3">';
+        echo '<img src="images/'.getImageById($currentImageId, $db).'">';
+        $currentImageId --;
+        echo '<img src="images/'.getImageById($currentImageId, $db).'">';
+        $currentImageId --;
+      echo '</div>';
+      $colId++;
+    }
+    if ($colId == 2) {
+      echo '<div class="col-sm-6">';
+        echo '<img src="images/'.getImageById($currentImageId, $db).'">';
+        $currentImageId --;
+      echo '</div>';
+      $colId++;
+    }
+    if ($colId == 3) {
+      echo '<div class="col-sm-3">';
+        echo '<img src="images/'.getImageById($currentImageId, $db).'">';
+        $currentImageId --;
+        echo '<img src="images/'.getImageById($currentImageId, $db).'">';
+        $currentImageId --;
+      echo '</div>';
+      $colId++;
+    }
+    echo '</div>';
 
-  </div>
+    $colId = 1;
+  }
 
-
-  </div><br>
-
- <div class="row">
-  <div class="col-md-12">
-
-   <?php
- 
-  
-   $db = mysqli_connect("localhost", "root", "", "ramcel");
-   $sql="SELECT * FROM photo  WHERE id ='2'";
-  $result = mysqli_query($db,$sql);
-  
-
- while ($row = mysqli_fetch_array($result)) {
-
-
-
-  echo "<img src='images/".$row["image"]."'  >";
-        
-         echo "<div id='title'>";
-        echo  " <a href='detail.php?id={$row['id']}'>{$row['title']} </a>" ;
-        echo "</div>";
-       
+$rowId++;
 }
-
-
 ?>
-
-
-  </div>
-
-
-  </div>
- 
-</div>
-
-
-<div class="col-md-6">
-
-<?php
- 
-  
-   $db = mysqli_connect("localhost", "root", "", "ramcel");
-   $sql="SELECT * FROM photo  WHERE id ='3'";
-  $result = mysqli_query($db,$sql);
-  
-
- while ($row = mysqli_fetch_array($result)) {
-
-
-
-  echo "<img src='images/".$row["image"]."'  >";
-        
-         echo "<div id='title'>";
-        echo  " <a href='detail.php?id={$row['id']}'>{$row['title']} </a>" ;
-        echo "</div>";
-       
-}
-
-
-?>
-
-
-</div>
-
-
-
-
-
-
-
-
-<div class="col-md-3">
-
-<div class="row">
-  <div class="col-md-12">
-
-<?php
- 
-  
-   $db = mysqli_connect("localhost", "root", "", "ramcel");
-   $sql="SELECT * FROM photo  WHERE id ='4'";
-  $result = mysqli_query($db,$sql);
-  
-
- while ($row = mysqli_fetch_array($result)) {
-
-
-
-  echo "<img src='images/".$row["image"]."'  >";
-        
-         echo "<div id='title'>";
-        echo  " <a href='detail.php?id={$row['id']}'>{$row['title']} </a>" ;
-        echo "</div>";
-       
-}
-
-
-?>
-
-
-  </div>
-
-
-  </div><br>
-
- <div class="row">
-  <div class="col-md-12">
-
-   <?php
- 
-  
-   $db = mysqli_connect("localhost", "root", "", "ramcel");
-   $sql="SELECT * FROM photo  WHERE id ='5'";
-  $result = mysqli_query($db,$sql);
-  
-
- while ($row = mysqli_fetch_array($result)) {
-
-
-
-  echo "<img src='images/".$row["image"]."'  >";
-        
-         echo "<div id='title'>";
-        echo  " <a href='detail.php?id={$row['id']}'>{$row['title']} </a>" ;
-        echo "</div>";
-       
-}
-
-
-?>
-
-
-  </div>
-
-
-  </div>
-
-
-
-
-</div>
-
-
-</div>
-
-
-<div class="row">
-
-<div class="col-md-6">
-
-  <?php
- 
-  
-   $db = mysqli_connect("localhost", "root", "", "ramcel");
-   $sql="SELECT * FROM photo  WHERE id ='6'";
-  $result = mysqli_query($db,$sql);
-  
-
- while ($row = mysqli_fetch_array($result)) {
-
-
-
-  echo "<img src='images/".$row["image"]."'  >";
-        
-         echo "<div id='title'>";
-        echo  " <a href='detail.php?id={$row['id']}'>{$row['title']} </a>" ;
-        echo "</div>";
-       
-}
-
-
-?>
-
-</div>
-
-
-<div class="col-md-6">
-<div class="row">
-
-<div class="col-md-6">
-
-<?php
- 
-  
-   $db = mysqli_connect("localhost", "root", "", "ramcel");
-   $sql="SELECT * FROM photo  WHERE id ='7'";
-  $result = mysqli_query($db,$sql);
-  
-
- while ($row = mysqli_fetch_array($result)) {
-
-
-
-  echo "<img src='images/".$row["image"]."'  >";
-        
-         echo "<div id='title'>";
-        echo  " <a href='detail.php?id={$row['id']}'>{$row['title']} </a>" ;
-        echo "</div>";
-       
-}
-
-
-?>
-
-</div>
-
-<div class="col-md-6">
-<?php
- 
-  
-   $db = mysqli_connect("localhost", "root", "", "ramcel");
-   $sql="SELECT * FROM photo  WHERE id ='8'";
-  $result = mysqli_query($db,$sql);
-  
-
- while ($row = mysqli_fetch_array($result)) {
-
-
-
-  echo "<img src='images/".$row["image"]."'  >";
-        
-         echo "<div id='title'>";
-        echo  " <a href='detail.php?id={$row['id']}'>{$row['title']} </a>" ;
-        echo "</div>";
-       
-}
-
-
-?>
-
-</div>
-
-</div>
-
-
-
-<div class="row">
-
-<div class="col-md-6">
-<?php
- 
-  
-   $db = mysqli_connect("localhost", "root", "", "ramcel");
-   $sql="SELECT * FROM photo  WHERE id ='9'";
-  $result = mysqli_query($db,$sql);
-  
-
- while ($row = mysqli_fetch_array($result)) {
-
-
-
-  echo "<img src='images/".$row["image"]."'  >";
-        
-         echo "<div id='title'>";
-        echo  " <a href='detail.php?id={$row['id']}'>{$row['title']} </a>" ;
-        echo "</div>";
-       
-}
-
-
-?>
-
-</div>
-
-<div class="col-md-6">
-<?php
- 
-  
-   $db = mysqli_connect("localhost", "root", "", "ramcel");
-   $sql="SELECT * FROM photo  WHERE id ='10'";
-  $result = mysqli_query($db,$sql);
-  
-
- while ($row = mysqli_fetch_array($result)) {
-
-
-
-  echo "<img src='images/".$row["image"]."'  >";
-        
-         echo "<div id='title'>";
-        echo  " <a href='detail.php?id={$row['id']}'>{$row['title']} </a>" ;
-        echo "</div>";
-       
-}
-
-
-?>
-</div>
-  
-</div>
-</div>
- 
-</div>
-
-
-
-
-</div>
-
 
   <form method="POST" action="saidur-grid.php" enctype="multipart/form-data">
     <input type="hidden" name="size" value="1000000">
